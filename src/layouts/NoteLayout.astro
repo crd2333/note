@@ -1,0 +1,58 @@
+---
+const { collections, struct, col, dir, file } = Astro.props;
+import Header from "../components/Header.astro";
+import Navigation from "../components/Navigation.astro"
+import Footer from "../components/Footer.astro"
+---
+
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/note/favicon.ico" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Astro</title>
+  </head>
+  <body>
+    <Header collections={collections} collection={col} />
+
+    <div class="content">
+
+      <Navigation struct={struct} collection={col} directory={dir} file={file} />
+
+      <main class="main-content">
+        <slot />
+      </main>
+
+    </div>
+
+    <Footer />
+
+  </body>
+</html>
+
+<style>
+  body {
+    margin: 0;
+  }
+
+  .content {
+    display: flex;
+  }
+
+  .main-content {
+    font-size: 12pt;
+    flex-grow: 1; /* 使其占据剩余空间 */
+    min-width: 0; /* 允许 flex item 收缩，防止内容撑开 */
+    margin-left: 25px;
+    margin-right: 25px;
+    margin-top: 25px;
+  }
+
+  .main-content :global(svg) {
+    max-width: 100%;
+    height: auto;
+    display: block; /* 避免 SVG 作为 inline 元素时可能产生的额外底部空间 */
+  }
+
+</style>

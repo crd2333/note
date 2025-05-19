@@ -1,0 +1,42 @@
+diff --git a/src/lib/typst.js b/src/lib/typst.js
+index 25db2a87b49648f12682d67fe39f41326c973a7f..e0ae62011be7b803fc4102098aa4a4d1b98deca5 100644
+--- a/src/lib/typst.js
++++ b/src/lib/typst.js
+@@ -44,7 +44,7 @@ export async function renderToSVGString(source, options) {
+     source = prepareSource(source, options);
+     const $typst = source.mainFileContent ? getOrInitCompiler() : initCompiler();
+     const svg = await renderToSVGString_($typst, source);
+-    $typst.evictCache(60);
++    $typst.evictCache(30);
+     let $ = load(svg);
+     (options?.cheerio?.preprocess) && ($ = options?.cheerio?.preprocess($, source));
+     const remPx = options.remPx || 16;
+@@ -120,6 +120,7 @@ export async function renderToHTML(source, options) {
+         html.printDiagnostics();
+         return { html: "" };
+     }
++    $typst.evictCache(30);
+     return {
+         html: onlyBody ?
+             html.result.body() :
+diff --git a/src/lib/typst.ts b/src/lib/typst.ts
+index 7b4f432aa7ecff584a247ac22dcb235ce721dc91..1074c060c0e94fdb0a31f4f9e3e99025716d10c0 100644
+--- a/src/lib/typst.ts
++++ b/src/lib/typst.ts
+@@ -54,7 +54,7 @@ export async function renderToSVGString(source: TypstDocInput, options: AstroTyp
+     source = prepareSource(source, options);
+     const $typst = source.mainFileContent ? getOrInitCompiler() : initCompiler();
+     const svg = await renderToSVGString_($typst, source);
+-    $typst.evictCache(60);
++    $typst.evictCache(30);
+     let $ = load(svg);
+     (options?.cheerio?.preprocess) && ($ = options?.cheerio?.preprocess($, source));
+     const remPx = options.remPx || 16;
+@@ -145,6 +145,7 @@ export async function renderToHTML(
+         html.printDiagnostics();
+         return { html: "" };
+     }
++    $typst.evictCache(30);
+     return {
+         html:
+             onlyBody ?

@@ -1,0 +1,44 @@
+{
+  "name": "my_notebook",
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=6144 astro build",
+    "compile": "astro check",
+    "preview": "astro preview",
+    "pub": "pnpm compile && pnpm publish --no-git-checks",
+    "fix-memory-limit": "cross-env LIMIT=6144 increase-memory-limit"
+  },
+  "dependencies": {
+    "@myriaddreamin/typst-ts-node-compiler": "0.6.0",
+    "@myriaddreamin/typst-ts-renderer": "0.6.0",
+    "@myriaddreamin/typst.ts": "0.6.0",
+    "@playform/compress": "^0.1.9",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@swup/astro": "^1.6.0",
+    "@swup/parallel-plugin": "^0.4.0",
+    "@swup/scroll-plugin": "^3.3.2",
+    "astro-integration-kit": "^0.18.0",
+    "astro-typst": "^0.9.0",
+    "cheerio": "^1.0.0",
+    "cross-env": "^7.0.3",
+    "increase-memory-limit": "^1.0.7"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@types/node": "^22.15.21",
+    "astro": "5.8.0",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
+  },
+  "peerDependencies": {
+    "astro": ">= 3.0.0"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "astro-typst": "patches/astro-typst.patch"
+    }
+  }
+}
