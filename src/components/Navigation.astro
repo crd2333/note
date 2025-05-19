@@ -1,0 +1,122 @@
+---
+const { struct, collection, directory, file } = Astro.props;
+const base = import.meta.env.BASE_URL;
+const directory_ = directory || file; // 如果没有目录名（代表这是个单文件组成的目录），使用文件名来代替
+
+// 辅助函数，用于替换字符串中的空格为连字符，删掉多余横杠，删去特殊符号，大写字母转小写
+const sanitizeUrl = (slug: string) => slug ? base + slug.toLowerCase().replace(/\s+/g, '-').replace(/-+/g, '-').replace(/[&?#@!$%^*()+=<>:;'"\\,._|~`{}\[\]\s]/g, '') : ""
+// 辅助函数，用于去掉 .html, -html, .svg, -svg 字样
+const sanitizeContent = (slug: string) => slug ? slug.replace(/\.html$/, '').replace(/-html$/, '').replace(/\.svg$/, '').replace(/-svg$/, '') : "";
+---
+
+<aside class="sidebar">
+  <ul>
+    <li> <!-- 侧边栏标题 -->
+      <div style="margin-bottom: 10px;"><a href=`/${collection === "Home" ? "" : sanitizeUrl(collection) + "/index"}` class="a1">{collection}</a></div>
+    </li>
+    {struct.map(([dir, files]) => {
+      const firstFile = files[0] && files[0] !== "index" ? files[0] : "";
+      const url = files[0] ? sanitizeUrl(`/${collection}/${dir}/${firstFile}`) : sanitizeUrl(`/${collection}/${dir}`);
+      const dirDisplay = dir === directory_ ?  // 根据是否选中该文件夹来决定是否标蓝，以及选用向下箭头还是向右箭头
+        <a href={url} class="a2_choose">
+          <span>{sanitizeContent(dir)}</span>
+          {files[0] ? <svg class="arrow" width="20px" height="20px" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 29 29" xml:space="preserve"><path fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="m20.5 11.5-6 6-6-6"></path></svg> : null}
+        </a> :
+        <a href={url} class="a2_not_choose">
+          <span>{sanitizeContent(dir)}</span>
+          {files[0] ? <svg class="arrow" width="20px" height="20px" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 29 29" xml:space="preserve"><path fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M11.5 8.5l6 6-6 6"></path></svg> : null}
+        </a>;
+      const fileDisplay = files.map((fi: string) => {
+          const url = sanitizeUrl(`/${collection}/${dir}/${fi}`);
+          return fi === "index" ? null : fi === file ? ( // 根据是否选中该文件来决定是否加粗
+            <li><a href={url} class="a3_choose">{sanitizeContent(fi)}</a></li>
+          ) : (
+            <li><a href={url} class="a3_not_choose">{sanitizeContent(fi)}</a></li>
+          );}
+      )
+
+      return (
+      <li>
+        <div>{dirDisplay}</div>
+        <ul>{files[0] && dir === directory_ ? fileDisplay : null}</ul>
+      </li>
+    )})}
+  </ul>
+</aside>
+
+<style>
+  .sidebar {
+    width: 20%;
+    flex-shrink: 0; /* 防止在 flex 布局中被压缩 */
+    background-color: #ffffff;
+    margin-top: 5px;
+    /* box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1); */
+    border-right: 1px solid #e0e0e0; /* 添加细线 */
+    padding-right: 20px; /* 导航文本与细线之间的间距 */
+    padding-left: 20px;
+    box-sizing: border-box;
+  }
+
+  .sidebar ul {
+    list-style: none;
+    position: sticky;
+    padding-left: 30px;
+    margin-right: 0;
+    top: 90px;
+  }
+
+  .sidebar ul li div {
+    justify-content: space-between;
+    display: flex;
+    margin-top: 7px;
+  }
+
+  .sidebar ul li ul li {
+    margin-top: 4px;
+  }
+
+  .sidebar .a1 {
+    text-decoration: none;
+    margin-left: -10px;
+    font-size: 16pt;
+    font-weight: bold;
+    color: #000000;
+  }
+
+  .sidebar .a2_choose {
+    justify-content: space-between;
+    display: flex;
+    text-decoration: none;
+    font-size: 14pt;
+    font-weight: bold;
+    color: rgb(82, 108, 254);
+    width: 100%;
+  }
+
+  .sidebar .a2_not_choose {
+    justify-content: space-between;
+    display: flex;
+    text-decoration: none;
+    font-size: 14pt;
+    font-weight: bold;
+    color: #504f4f;
+    width: 100%;
+  }
+
+  .sidebar .a3_choose {
+    text-decoration: none;
+    font-size: 12pt;
+    color: rgb(82, 108, 254);
+  }
+
+  .sidebar .a3_not_choose {
+    text-decoration: none;
+    font-size: 12pt;
+    color: #333;
+  }
+
+  .sidebar .arrow {
+    height: 20px;
+    margin-top: 3px;
+  }
+</style>

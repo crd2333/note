@@ -1,0 +1,126 @@
+---
+import NoteLayout from "../layouts/NoteLayout.astro";
+import { getCollection, type CollectionEntry } from 'astro:content';
+import type { InferGetStaticParamsType, InferGetStaticPropsType, GetStaticPaths } from 'astro';
+import { collections } from '../content/config'; // Import collections config
+import { Typst } from "astro-typst/src/components";
+
+// 定义一个包含所有集合名称的联合类型
+type CollectionName = keyof typeof collections;
+type FileTree = Array<[string, string[]]>;
+type PathObject = {
+    params: {
+        slug: string; // 通常 slug 是字符串
+    };
+    props: {
+        entry: CollectionEntry<CollectionName>; // 使用 Astro 的 CollectionEntry 类型
+        fileTree;                               // 传递当前 collection 的文件树
+        allCollections: CollectionName[];       // 所有 collection 列表
+        curCol: CollectionName;                 // 当前条目所属 collection
+        curDir: string;                         // 获取当前目录名（如果是文件的话为 ""）
+        curFile: string;                        // 获取当前文件名
+    };
+}
+
+type Params = InferGetStaticParamsType<typeof getStaticPaths>;
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+// 辅助函数：为特定集合构建文件树
+export const buildFileTreeForCollection = (collectionEntries: CollectionEntry<CollectionName>[],) : FileTree => {
+    let fileTree = {};            // 初始化一个空对象来存储映射
+    let defaultOrder = {};        // 每个目录内的默认顺序分配
+    let dirOrder = {};            // 目录之间的顺序
+    let dirDefaultOrder = 114514; // 目录之间的默认顺序，分配一个很大的数用于往后排（x
+
+    for (const item of collectionEntries) {
+        if (!item.id.endsWith('.md') && !item.id.endsWith('.typ') || item.data.hide || ["index.md", "index.typ"].includes(item.id)) {
+            continue;
+        }
+
+        const pathParts = item.id.split('/');
+        const length = pathParts.length;
+        const dirName = pathParts[0];                                      // 目录名
+        const fileName = pathParts[length - 1].replace(/\.(md|typ)$/, ''); // 文件名，去掉扩展名
+
+        if (length === 1) {        // 这是一个单文件表示的文件夹
+            dirOrder[fileName] = item.data.order || dirDefaultOrder++; // 给该文件夹分配顺序
+            fileTree[fileName] = fileTree[fileName] || {};             // fileName: {}
+        } else if (length === 2) { // 这是一个文件夹下的文件（它们共同组成一个话题）
+            if (fileName === "index") // 如果有 index 文件，其顺序指定了文件夹的顺序（否则，留待之后分配默认值）
+                dirOrder[dirName] = item.data.order || dirDefaultOrder++;
+            // 接下来分配文件夹内的文件顺序
+            if (!(dirName in defaultOrder))
+                defaultOrder[dirName] = 114514; // 分配一个很大的数用于往后排（x
+            // index 自身的顺序固定为 0 排第一个（它的 order 拿去给 dir 了），其它文件若不指定（或指定为 0）则往后排
+            const order = (fileName === "index") ? 0 : item.data.order || defaultOrder[dirName]++;
+            fileTree[dirName] = fileTree[dirName] || {};
+            fileTree[dirName][fileName] = fileTree[dirName][fileName] || order; // fileName : oder
+        } else {
+            throw new Error(`Unexpected path length: ${length}`);
+        }
+    }
+    // 对每个目录内的文件进行排序
+    for (const dirName in fileTree) {
+        const files = fileTree[dirName];
+        const sortedFiles = Object.entries(files).sort(([, orderA], [, orderB]) => { return Number(orderA) - Number(orderB); });
+        fileTree[dirName] = sortedFiles.map(([fileName]) => fileName); // 只保留文件名
+    }
+    // 对每个目录进行排序
+    for (const dirName in fileTree) {
+        if (!(dirName in dirOrder))
+            dirOrder[dirName] = dirDefaultOrder++; // 对于那些没有 index 文件的文件夹，分配一个默认值
+    }
+    const sortedDirEntries = Object.entries(dirOrder).sort(([, orderA], [, orderB]) => { return Number(orderA) - Number(orderB); });
+    const orderedFileTreeArray : [string, string[]][] = []; // 改为 [[dirName], [files]] 的形式来保留顺序
+    for (const [dirName] of sortedDirEntries) {
+        if (fileTree.hasOwnProperty(dirName)) {
+            orderedFileTreeArray.push([dirName, fileTree[dirName]]);
+        }
+    }
+
+    return orderedFileTreeArray;
+};
+
+export const getStaticPaths = (async () => {
+    const allCollections = Object.keys(collections) as CollectionName[];
+    const paths: PathObject[] = [];
+
+    for (const collectionName of allCollections) {
+        // 获取当前集合的所有条目并过滤
+        const entries = (await getCollection(collectionName)).filter(entry =>
+            entry.id.endsWith('.md') || entry.id.endsWith('.typ') && !entry.data.hide
+        );
+        if (entries.length === 0)
+            continue;
+
+        const fileTree = buildFileTreeForCollection(entries);
+
+        for (const entry of entries) {
+            const pathParts = entry.id.split('/');
+            paths.push({
+                params: {
+                    slug: `${collectionName.replace(/\s+/g, '-').toLowerCase()}/${entry.slug}`,
+                },
+                props: {
+                    entry,
+                    fileTree,
+                    allCollections,
+                    curCol: collectionName,
+                    curDir: pathParts.length > 1 ? pathParts[0] : "",
+                    curFile: pathParts[pathParts.length - 1].replace(/\.(md|typ)$/, ''), // 去掉文件扩展名
+                },
+            });
+        }
+    }
+    // console.dir(paths.map(path => path.params.slug), { maxArrayLength: null });
+
+    return paths;
+}) satisfies GetStaticPaths;
+
+const { entry, fileTree, allCollections, curCol, curDir, curFile } = Astro.props as Props;
+const content = await entry.render();
+---
+
+<NoteLayout collections={allCollections} struct={fileTree} col={curCol} dir={curDir} file={curFile}>
+    <content.Content />
+</NoteLayout>

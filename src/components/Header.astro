@@ -1,0 +1,66 @@
+---
+const { collections, collection } = Astro.props;
+const base = import.meta.env.BASE_URL;
+// 辅助函数，用于替换字符串中的空格为连字符，大写字母转小写
+const sanitize = (slug: string) => slug ? slug.replace(/\s+/g, '-').toLowerCase() : "";
+---
+
+<header>
+  <div class="caption">
+    <a href=`${base}`><img src=`${base}/avatar.jpg` style="height: 80%; border-radius: 50%; " /></a>
+    <div style="width:1em"></div>
+    <h1 style="font-weight: bold;">Crd233's Notebook</h1>
+    <div style="width:5em"></div>
+    <nav>
+      <a href=`${base}`>{collection === "Home" ? <strong>Home</strong> : "Home"}</a>
+      {collections.map((col) =>
+        col === collection
+          ? <a href={base + sanitize(`/${col}/index`)}><strong>{col}</strong></a>
+          : <a href={base + sanitize(`/${col}/index`)}>{col}</a>
+      )}
+    </nav>
+  </div>
+  <div style="display: flex;">
+    <!-- <a href=`${base}` style="display: flex;"></a> -->
+    <a href=`/` style="display: flex;"> <!-- 删掉 base，跳转到网页根目录 -->
+      <img src=`${base}/house.svg` style="height: 2.5em;"/>
+      <div style="margin-left: 8px; margin-top: 3px; font-size: large;"></div>
+    </a>
+    <a href="https://github.com/crd2333" style="display: flex; margin-left: 20px;">
+      <img src=`${base}/github-brands-white.svg` style="height: 2.5em;"/>
+      <div style="margin-left: 8px; margin-top: 3px; font-size: large;"></div>
+    </a>
+  </div>
+</header>
+
+<style>
+  header {
+    background-color: #6686a0;
+    color: white;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  header .caption {
+    display: flex;
+    height: 40px;
+    align-items: center;
+  }
+
+  header h1 {
+    margin: 0;
+    font-size: 20px;
+  }
+
+  header nav a {
+    color: white;
+    text-decoration: none;
+    margin-left: 20px;
+    font-size: 16px;
+  }
+</style>
